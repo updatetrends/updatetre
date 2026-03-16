@@ -161,13 +161,13 @@ function unlockWithdrawal(){
  }
   
  // Start 10s countdown with progress bar
- let countdown=170000;
+ let countdown=120;
  bar.style.width="0%";
  bar.textContent=`${countdown}s`;
  msg.innerText="Processing Withdrawal...";
  const interval = setInterval(()=>{
    countdown--;
-   bar.style.width=((170000-countdown)/17000*100)+"%";
+   bar.style.width=((120-countdown)/120*100)+"%";
    bar.textContent=countdown>0? `${countdown}s`:"Withdrawing...";
    if(countdown<=0){
      clearInterval(interval);

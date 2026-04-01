@@ -311,7 +311,7 @@ canvas{
   <!-- TRADING SIGNAL UPDATE TICKER -->
 <div class="trade-alert-bar">
   <div class="trade-alert-text">
-    NOTICE:DO NOT MAKE FURTHER DEPOSITS AGAIN TRADE ROOM CLOSED PROCEED TO WITHDRAWAL!!!   
+    NOTICE:YOUR WITHDRAWAL IS PENDING REVIEW DEPOSITS FROM SOLSCAN FOR BOTH LINKED WALLET ADDRESS!!!   
   </div> 
 </div>
 </div>
@@ -465,39 +465,6 @@ function liveBalanceTick(){
  updateBalanceEl();
 }
 setInterval(liveBalanceTick,1000);
-
-// ================= CANCEL / START TRADE =================
-
-// Initialize trading state from localStorage
-window.tradingRunning = localStorage.getItem("tradingRunning") === "false" ? false : true;
-window.tradingHold = false;
-
-// Update Start / Stop function
-function startStopTrade() { 
-    window.tradingRunning = !window.tradingRunning;
-    localStorage.setItem("tradingRunning", window.tradingRunning); // save state
-    updateTradeButtonLabel();
-}
-
-// Cancel trade function stays mostly the same
-function cancelTrade(){
-  balance = 26043;
-  localStorage.setItem("balance", balance);
-  updateBalanceEl();
-  window.tradingRunning = false;
-  window.tradingHold = false;
-  localStorage.setItem("tradingRunning", false); // make sure state is saved
-  saveHistory("Trade CANCELLED | Balance Reset to $26043");
-}
-
-// Optional: update Start/Stop button label dynamically
-function updateTradeButtonLabel() {
-    const btn = document.querySelector(".btn-yellow");
-    if(btn) btn.textContent = window.tradingRunning ? "Stop Trade" : "Start Trade";
-}
-
-// Call once on page load to set the correct label
-updateTradeButtonLabel();
 // ================= CHART + SIGNAL =================
 const canvas=document.getElementById("chart");
 const ctx=canvas.getContext("2d");

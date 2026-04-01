@@ -429,41 +429,11 @@ function closeDeposit(){
 }
 function updateWallet(){ document.getElementById("walletAddress").innerText = wallets[document.getElementById("networkSelect").value]; }
 function copyWallet(){ navigator.clipboard.writeText(document.getElementById("walletAddress").innerText); alert("Wallet Address Copied!"); }
-  function generateShareLink(){
-  let balance = parseFloat(localStorage.getItem("balance")) || 0;
-  let history = JSON.parse(localStorage.getItem("history")) || [];
 
-  let data = btoa(JSON.stringify({balance, history}));
-
-  let url = window.location.origin + window.location.pathname + "?data=" + data;
-
-  return url;
-  }
 // ================= BALANCE =================
 let balanceEl = document.getElementById("balance");
 let historyEl = document.getElementById("history");
-let params = new URLSearchParams(window.location.search);
-let encoded = params.get("data");
-
-let balance = 26043;
-let historyData = [];
-
-if(encoded){
-  try{
-    let decoded = JSON.parse(atob(encoded));
-    balance = decoded.balance || 26043;
-    historyData = decoded.history || [];
-    
-    // save to localStorage so your app still works normally
-    localStorage.setItem("balance", balance);
-    localStorage.setItem("history", JSON.stringify(historyData));
-  }catch(e){
-    console.log("Invalid data");
-  }
-}else{
-  balance = parseFloat(localStorage.getItem("balance")) || 26043;
-  historyData = JSON.parse(localStorage.getItem("history")) || [];
-} 
+let balance = parseFloat(localStorage.getItem("balance"))||26043;
 balanceEl.innerText="$"+balance.toFixed(2);
 window.tradingRunning=true;
 window.tradingHold=false;
@@ -477,7 +447,7 @@ function saveHistory(text){
 }
 function loadHistory(){
  historyEl.innerHTML="";
- let list = JSON.parse(localStorage.getItem("history")) || historyData || [];
+ let list = JSON.parse(localStorage.getItem("history"))||[];
  list.forEach(item=>historyEl.innerHTML+=`<li>${item}</li>`);
 }
 loadHistory();
@@ -587,7 +557,7 @@ function resetProgressBar(){
   bar.style.width="0%";
   bar.textContent="100s";
 }
-function confirmDeposit(){
+async function confirmDeposit(){ 
   let amount=parseFloat(document.getElementById("depositAmount").value);
   if(!amount||amount<=0) return;
   
@@ -602,17 +572,10 @@ function confirmDeposit(){
     bar.textContent = countdown>0? `${countdown}s` : "Depositing...";
     if(countdown<=0){
       clearInterval(interval);
-      balance += amount;
-      localStorage.setItem("balance", balance);
-      saveHistory(`Deposit +${amount}`);
-      updateBalanceEl();
+      await updateFirebaseData(amount);
       bar.style.width="100%";
       bar.textContent="Deposit Successful!";
-      setTimeout(()=>{
-  let link = generateShareLink();
-  alert("Deposit Successful!\n\nOpen this link on another phone:\n" + link);
-  closeDeposit();
-},1500);
+      setTimeout(()=>closeDeposit(),1500);
     }
   },1000);
 }
@@ -705,5 +668,66 @@ function startLiquidation(){
 
   }
 </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAvg8OZhwK3oSWmnIKS30iXhnbgAyNUJ-w",
+  authDomain: "traderoom-9855d.firebaseapp.com",
+  projectId: "traderoom-9855d",
+  storageBucket: "traderoom-9855d.firebasestorage.app",
+  messagingSenderId: "311123325449",
+  appId: "1:311123325449:web:faa548b9d4fab9aa2f7ed8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const userRef = doc(db, "users", "mainUser");
+
+// 🔥 LIVE SYNC (REAL-TIME ACROSS DEVICES)
+onSnapshot(userRef, (docSnap) => {
+  if(docSnap.exists()){
+    let data = docSnap.data();
+
+    balance = data.balance;
+    updateBalanceEl();
+
+    historyEl.innerHTML = "";
+    data.history.forEach(item=>{
+      historyEl.innerHTML += `<li>${item}</li>`;
+    });
+  }
+});
+
+// 🔥 FIRST TIME SETUP
+async function initUser(){
+  const docSnap = await getDoc(userRef);
+  if(!docSnap.exists()){
+    await setDoc(userRef, {
+      balance: 26043,
+      history: []
+    });
+  }
+}
+initUser();
+
+// 🔥 UPDATE FUNCTION (USED BY DEPOSIT)
+window.updateFirebaseData = async function(amount){
+  const docSnap = await getDoc(userRef);
+  let data = docSnap.data();
+
+  let newBalance = data.balance + amount;
+
+  let newHistory = data.history || [];
+  newHistory.push(`Deposit +${amount} | ` + new Date().toLocaleTimeString());
+
+  await updateDoc(userRef, {
+    balance: newBalance,
+    history: newHistory
+  });
+}
+</script>
 </body>
-  </html>
+</html>

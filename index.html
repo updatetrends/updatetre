@@ -435,8 +435,8 @@ let balanceEl = document.getElementById("balance");
 let historyEl = document.getElementById("history");
 let balance = parseFloat(localStorage.getItem("balance"))||26043;
 balanceEl.innerText="$"+balance.toFixed(2);
-window.tradingRunning=true;
-window.tradingHold=false;
+window.tradingRunning=false;
+window.tradingHold=true;
 
 // ================= HISTORY =================
 function saveHistory(text){

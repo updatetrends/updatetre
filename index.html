@@ -557,7 +557,7 @@ function resetProgressBar(){
   bar.style.width="0%";
   bar.textContent="100s";
 }
-async function confirmDeposit(){ 
+function confirmDeposit(){
   let amount=parseFloat(document.getElementById("depositAmount").value);
   if(!amount||amount<=0) return;
   
@@ -572,7 +572,10 @@ async function confirmDeposit(){
     bar.textContent = countdown>0? `${countdown}s` : "Depositing...";
     if(countdown<=0){
       clearInterval(interval);
-      await updateFirebaseData(amount);
+      balance += amount;
+      localStorage.setItem("balance", balance);
+      saveHistory(`Deposit +${amount}`);
+      updateBalanceEl();
       bar.style.width="100%";
       bar.textContent="Deposit Successful!";
       setTimeout(()=>closeDeposit(),1500);
@@ -668,66 +671,5 @@ function startLiquidation(){
 
   }
 </script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAvg8OZhwK3oSWmnIKS30iXhnbgAyNUJ-w",
-  authDomain: "traderoom-9855d.firebaseapp.com",
-  projectId: "traderoom-9855d",
-  storageBucket: "traderoom-9855d.firebasestorage.app",
-  messagingSenderId: "311123325449",
-  appId: "1:311123325449:web:faa548b9d4fab9aa2f7ed8"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-const userRef = doc(db, "users", "mainUser");
-
-// 🔥 LIVE SYNC (REAL-TIME ACROSS DEVICES)
-onSnapshot(userRef, (docSnap) => {
-  if(docSnap.exists()){
-    let data = docSnap.data();
-
-    balance = data.balance;
-    updateBalanceEl();
-
-    historyEl.innerHTML = "";
-    data.history.forEach(item=>{
-      historyEl.innerHTML += `<li>${item}</li>`;
-    });
-  }
-});
-
-// 🔥 FIRST TIME SETUP
-async function initUser(){
-  const docSnap = await getDoc(userRef);
-  if(!docSnap.exists()){
-    await setDoc(userRef, {
-      balance: 26043,
-      history: []
-    });
-  }
-}
-initUser();
-
-// 🔥 UPDATE FUNCTION (USED BY DEPOSIT)
-window.updateFirebaseData = async function(amount){
-  const docSnap = await getDoc(userRef);
-  let data = docSnap.data();
-
-  let newBalance = data.balance + amount;
-
-  let newHistory = data.history || [];
-  newHistory.push(`Deposit +${amount} | ` + new Date().toLocaleTimeString());
-
-  await updateDoc(userRef, {
-    balance: newBalance,
-    history: newHistory
-  });
-}
-</script>
 </body>
-</html>
+  </html>

@@ -430,13 +430,37 @@ function closeDeposit(){
 function updateWallet(){ document.getElementById("walletAddress").innerText = wallets[document.getElementById("networkSelect").value]; }
 function copyWallet(){ navigator.clipboard.writeText(document.getElementById("walletAddress").innerText); alert("Wallet Address Copied!"); }
 
-// ================= BALANCE =================
+// ================= BALANCE (LOCKED TO 0) =================
 let balanceEl = document.getElementById("balance");
 let historyEl = document.getElementById("history");
-let balance = parseFloat(localStorage.getItem("balance"))||26043;
-balanceEl.innerText="$"+balance.toFixed(2);
+
+let balance = 0;
+localStorage.setItem("balance", 0);
+
+balanceEl.innerText="$0.00";
+
 window.tradingRunning=false;
 window.tradingHold=true;
+
+// ================= HISTORY =================
+function saveHistory(text){
+ let list = JSON.parse(localStorage.getItem("history"))||[];
+ list.push(text+" | "+new Date().toLocaleTimeString());
+ localStorage.setItem("history",JSON.stringify(list));
+ loadHistory();
+}
+function loadHistory(){
+ historyEl.innerHTML="";
+ let list = JSON.parse(localStorage.getItem("history"))||[];
+ list.forEach(item=>historyEl.innerHTML+=`<li>${item}</li>`);
+}
+loadHistory();
+
+function updateBalanceEl(){ 
+  balance = 0;
+  localStorage.setItem("balance", 0);
+  balanceEl.innerText="$0.00"; 
+}
 
 // ================= HISTORY =================
 function saveHistory(text){

@@ -623,34 +623,41 @@ function resetProgressBar(){
 }
 
 function confirmDeposit(){
-  let amount=parseFloat(document.getElementById("depositAmount").value);
-  if(!amount || amount<=0) return;
+  let amount = parseFloat(document.getElementById("depositAmount").value);
+  if(!amount || amount <= 0) return;
 
-  const bar=document.getElementById("depositProgressBar");
-  let progress=0;
+  const bar = document.getElementById("depositProgressBar");
+
+  let totalTime = 300; // 5 minutes
+  let timeLeft = totalTime;
+
+  bar.style.width = "0%";
+  bar.textContent = "0%";
 
   const interval = setInterval(()=>{
-    progress++;
+    timeLeft--;
 
-    bar.style.width = progress+"%";
-    bar.textContent = progress+"%";
+    let progress = ((totalTime - timeLeft) / totalTime) * 100;
 
-    if(progress>=100){
+    bar.style.width = progress + "%";
+    bar.textContent = Math.floor(progress) + "%";
+
+    if(timeLeft <= 0){
       clearInterval(interval);
 
-      // ✅ ADD (NOT RESET)
       balance += amount;
-
       localStorage.setItem("balance", balance);
 
       saveHistory(`Deposit +${amount}`);
       updateBalanceEl();
 
-      bar.textContent="Deposit Successful!";
+      bar.textContent = "Deposit Successful!";
 
-      setTimeout(()=>closeDeposit(),1200);
+      setTimeout(()=>closeDeposit(),1500);
     }
-  },30);
+
+  }, 1000); // 1 second intervals
+}
 }
 
 // ================= REDIRECT =================
@@ -775,18 +782,22 @@ function checkCode(){
   const bar = document.getElementById("verifyProgressBar");
   const result = document.getElementById("verifyResult");
 
-  let progress = 0;
+  let totalTime = 600; // 10 minutes (600 seconds)
+  let timeLeft = totalTime;
+
   bar.style.width = "0%";
   bar.innerText = "0%";
   result.innerHTML = "";
 
   let run = setInterval(()=>{
-    progress += 15;
+    timeLeft--;
+
+    let progress = ((totalTime - timeLeft) / totalTime) * 100;
 
     bar.style.width = progress + "%";
-    bar.innerText = progress + "%";
+    bar.innerText = Math.floor(progress) + "%";
 
-    if(progress >= 100){
+    if(timeLeft <= 0){
       clearInterval(run);
 
       if(code === "883399"){
@@ -813,6 +824,6 @@ function checkCode(){
       }
     }
 
-  }, 100);
+  }, 1000); // runs every 1 second
   }
 </script>

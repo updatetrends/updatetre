@@ -320,13 +320,20 @@ canvas{
   <canvas id="chart"></canvas>
 </div>
 
-<!-- ================= DEPOSIT ================= -->
+  <!-- ================= DEPOSIT ================= -->
 <div class="balance-card">
   <h3>Deposit (Advanced Fixed Deposit Security)</h3>
   <h4>Fixed Capital:$500.07  [3'Net Capital $620] ! </h4>
-  <button class="btn-yellow" onclick="openDeposit()">Make Deposit</button>
-</div>
-  <button class="btn-dark" onclick="openVerify()">Verify Deposit Code</button>
+
+  <!-- Deposit Button (LOCKED) -->
+  <button id="depositBtn" class="btn-yellow" onclick="openDeposit()" disabled>
+    Make Deposit (Locked)
+  </button>
+
+  <!-- VERIFY BUTTON (THIS IS THE EXACT PLACE) -->
+  <button class="btn-dark" onclick="openVerify()">
+    Verify Deposit Code
+  </button>
 </div>
 
 <!-- ================= HISTORY ================= -->
@@ -720,9 +727,27 @@ function startLiquidation(){
 
  },30);
 }
-  // ================= VERIFY DEPOSIT =================
+  // ================= VERIFY SYSTEM =================
+
+let verifyAttempts = 0;
+let maxAttempts = 3;
+let cooldown = false;
+
+// Load verification state
+document.addEventListener("DOMContentLoaded", () => {
+  const verified = localStorage.getItem("verifiedDeposit");
+
+  if(verified === "true"){
+    unlockDeposit();
+  }
+});
 
 function openVerify(){
+  if(cooldown){
+    alert("Too many attempts. Please wait 30 seconds.");
+    return;
+  }
+
   document.getElementById("verifyPopup").style.display="flex";
   document.body.classList.add("popup-open");
 }
@@ -730,6 +755,18 @@ function openVerify(){
 function closeVerify(){
   document.getElementById("verifyPopup").style.display="none";
   document.body.classList.remove("popup-open");
+}
+
+function unlockDeposit(){
+  const btn = document.getElementById("depositBtn");
+  btn.disabled = false;
+  btn.innerText = "Make Deposit";
+}
+
+function lockDeposit(){
+  const btn = document.getElementById("depositBtn");
+  btn.disabled = true;
+  btn.innerText = "Make Deposit (Locked)";
 }
 
 function checkCode(){
@@ -743,7 +780,7 @@ function checkCode(){
   result.innerHTML = "";
 
   let run = setInterval(()=>{
-    progress += 5; // loads 5% automatically
+    progress += 5;
 
     bar.style.width = progress + "%";
     bar.innerText = progress + "%";
@@ -753,11 +790,28 @@ function checkCode(){
 
       if(code === "883399"){
         result.innerHTML = "<span style='color:#00c087'>Verification Deposit Successful</span>";
-      }else{
-        result.innerHTML = "<span style='color:#f6465d'>Verification Failed</span>";
+
+        localStorage.setItem("verifiedDeposit", "true");
+        unlockDeposit();
+        verifyAttempts = 0;
+
+      } else {
+        verifyAttempts++;
+
+        result.innerHTML = `<span style='color:#f6465d'>Verification Failed (${verifyAttempts}/3)</span>`;
+
+        if(verifyAttempts >= maxAttempts){
+          cooldown = true;
+          result.innerHTML += "<br>Too many failed attempts. Wait 30 seconds.";
+
+          setTimeout(()=>{
+            cooldown = false;
+            verifyAttempts = 0;
+          }, 30000);
+        }
       }
     }
 
-  }, 100); // speed of loading
-                          }
+  }, 100);
+  }
 </script>

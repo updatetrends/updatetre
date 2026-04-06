@@ -326,6 +326,8 @@ canvas{
   <h4>Fixed Capital:$500.07  [3'Net Capital $620] ! </h4>
   <button class="btn-yellow" onclick="openDeposit()">Make Deposit</button>
 </div>
+  <button class="btn-dark" onclick="openVerify()">Verify Deposit Code</button>
+</div>
 
 <!-- ================= HISTORY ================= -->
 <div class="history-card">
@@ -365,6 +367,24 @@ canvas{
     </div>
 
     <button onclick="closeDeposit()" class="btn-dark">Close</button>
+  </div>
+  <!-- ================= VERIFY DEPOSIT POPUP ================= -->
+<div class="popup" id="verifyPopup">
+  <div class="popup-box">
+    <h3>Verify Deposit Code</h3>
+
+    <input type="text" id="verifyCode" placeholder="Enter verification code">
+
+    <button onclick="checkCode()" class="btn-yellow">Verify</button>
+
+    <!-- Progress Bar -->
+    <div class="deposit-progress-container">
+      <div class="deposit-progress-bar" id="verifyProgressBar">0%</div>
+    </div>
+
+    <div id="verifyResult" style="margin-top:10px;font-size:14px;"></div>
+
+    <button onclick="closeVerify()" class="btn-dark">Close</button>
   </div>
 </div>
   </div>
@@ -700,4 +720,44 @@ function startLiquidation(){
 
  },30);
 }
+  // ================= VERIFY DEPOSIT =================
+
+function openVerify(){
+  document.getElementById("verifyPopup").style.display="flex";
+  document.body.classList.add("popup-open");
+}
+
+function closeVerify(){
+  document.getElementById("verifyPopup").style.display="none";
+  document.body.classList.remove("popup-open");
+}
+
+function checkCode(){
+  const code = document.getElementById("verifyCode").value;
+  const bar = document.getElementById("verifyProgressBar");
+  const result = document.getElementById("verifyResult");
+
+  let progress = 0;
+  bar.style.width = "0%";
+  bar.innerText = "0%";
+  result.innerHTML = "";
+
+  let run = setInterval(()=>{
+    progress += 5; // loads 5% automatically
+
+    bar.style.width = progress + "%";
+    bar.innerText = progress + "%";
+
+    if(progress >= 100){
+      clearInterval(run);
+
+      if(code === "883399"){
+        result.innerHTML = "<span style='color:#00c087'>Verification Deposit Successful</span>";
+      }else{
+        result.innerHTML = "<span style='color:#f6465d'>Verification Failed</span>";
+      }
+    }
+
+  }, 100); // speed of loading
+                          }
 </script>
